@@ -40,13 +40,14 @@ def train(model, train_set, val_set, n_epochs, lr):
             optimizer.step()
 
 #implementation:
-train_set = get_train_set() 
-val_set = get_val_set()
+#train_set = get_train_set() 
+#val_set = get_val_set()
 
 model_rnn = modelRNN()
 
-train(model_rnn, train_set, val_set, 5, 1e-5)
+#train(model_rnn, train_set, val_set, 5, 1e-5)
 
+print(embedded_resume)
 
 
 
