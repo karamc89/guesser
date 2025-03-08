@@ -45,22 +45,21 @@ def train(model, train_set, val_set, n_epochs, lr):
             optimizer.step()
 
         model.eval()  # Set the model to evaluation mode
-        with torch.no_grad():  # No gradients needed for validation
-            val_loss = 0
-            correct = 0
-            total = 0
-            for resume, label in val_set:
-                prediction = model(resume)
-                val_loss += criterion(prediction, label).item()
-                _, predicted = torch.max(prediction, 1)
-                total += label.size(0)
-                correct += (predicted == label).sum().item()
+        val_loss = 0
+        correct = 0
+        total = 0
+        for resume, label in val_set:
+            prediction = model(resume)
+            val_loss += criterion(prediction, label).item()
+            _, predicted = torch.max(prediction, 1)
+            total += label.size(0)
+            correct += (predicted == label).sum().item()
 
-            avg_val_loss = val_loss / len(val_set)
-            accuracy = 100 * correct / total
-            print("epoch #:" + epoch + 1)
-            print("Loss:", avg_val_loss)
-            print("Accuracy:", accuracy)
+        avg_val_loss = val_loss / len(val_set)
+        accuracy = 100 * correct / total
+        print("epoch #:", epoch + 1)
+        print("Loss:", avg_val_loss)
+        print("Accuracy:", accuracy)
            
 
 #function: get data sets by implementing embed function on df
