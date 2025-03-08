@@ -10,7 +10,10 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
 import random 
-
+import data
+from data import df
+from data import word2vec
+from data import embed
 
 #class: RNN model 
 class modelRNN(nn.Module):
@@ -77,8 +80,8 @@ def get_data_sets(df, word2vec, max_len, val_split=0.2):
     train_resumes = [embed(x, word2vec, max_len) for x in train_data['Cleaned_Resume']]
     val_resumes = [embed(x, word2vec, max_len) for x in val_data['Cleaned_Resume']]
 
-    train_set = torch.utils.data.TensorDataset(torch.tensor(train_resumes, dtype=torch.float32), torch.tensor(train_data['Job_Category'].values))
-    val_set = torch.utils.data.TensorDataset(torch.tensor(val_resumes, dtype=torch.float32), torch.tensor(val_data['Job_Category'].values))
+    train_set = torch.utils.data.TensorDataset(torch.tensor(train_resumes, dtype=torch.float32), torch.tensor(train_data['Category'].values))
+    val_set = torch.utils.data.TensorDataset(torch.tensor(val_resumes, dtype=torch.float32), torch.tensor(val_data['Category'].values))
 
     return train_set, val_set
 
