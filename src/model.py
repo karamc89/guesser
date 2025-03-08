@@ -30,27 +30,6 @@ class modelRNN(nn.Module):
         out,__ = self.rnn(x, h0) 
         return self.fc(out[:,-1,:])
 
-#function: get data sets by implementing embed function on df
-def get_data_sets(df, word2vec, max_len, val_split=0.2):
-    # Split into training and validation sets
-    val_size = int(len(df) * val_split)
-    indices = list(range(len(df)))
-    random.shuffle(indices)
-    train_indices = indices[val_size:]
-    val_indices = indices[:val_size]
-
-    train_data = df.iloc[train_indices]
-    val_data = df.iloc[val_indices]
-
-    # Convert cleaned resumes to word2vec embeddings
-    def process_data(data):
-        return torch.tensor([embed(x, word2vec, max_len) for x in data['Cleaned_Resume']])
-
-    train_set = torch.utils.data.TensorDataset(process_data(train_data), torch.tensor(train_data['Job_Category'].values))
-    val_set = torch.utils.data.TensorDataset(process_data(val_data), torch.tensor(val_data['Job_Category'].values))
-
-    return train_set, val_set
-
 
 #function: training the model
 def train(model, train_set, val_set, n_epochs, lr):
@@ -79,7 +58,30 @@ def train(model, train_set, val_set, n_epochs, lr):
 
             avg_val_loss = val_loss / len(val_set)
             accuracy = 100 * correct / total
-            print(f'Epoch {epoch+1}/{n_epochs}, Validation Loss: {avg_val_loss:.4f}, Accuracy: {accuracy:.2f}%')
+            print("epoch #:" + epoch + 1)
+            print("Loss:", avg_val_loss)
+            print("Accuracy:", accuracy)
+           
+
+#function: get data sets by implementing embed function on df
+def get_data_sets(df, word2vec, max_len, val_split=0.2):
+    # Split into training and validation sets
+    val_size = int(len(df) * val_split)
+    indices = list(range(len(df)))
+    random.shuffle(indices)
+    train_indices = indices[val_size:]
+    val_indices = indices[:val_size]
+
+    train_data = df.iloc[train_indices]
+    val_data = df.iloc[val_indices]
+
+    train_resumes = [embed(x, word2vec, max_len) for x in train_data['Cleaned_Resume']]
+    val_resumes = [embed(x, word2vec, max_len) for x in val_data['Cleaned_Resume']]
+
+    train_set = torch.utils.data.TensorDataset(torch.tensor(train_resumes, dtype=torch.float32), torch.tensor(train_data['Job_Category'].values))
+    val_set = torch.utils.data.TensorDataset(torch.tensor(val_resumes, dtype=torch.float32), torch.tensor(val_data['Job_Category'].values))
+
+    return train_set, val_set
 
 
 #implementation:
@@ -89,7 +91,7 @@ hidden_size = 128
 num_class = 24
 model_rnn = modelRNN(input_size, hidden_size, num_class)
 
-train_set, val_set = get_data_loaders(batch_size = 1)
+train_set, val_set = get_data_sets(df, word2vec, max_len = 100)
 train(model_rnn, train_set, val_set, 5, 1e-5)
 
 
