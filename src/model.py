@@ -9,6 +9,8 @@ Training function defined as well
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
+import random 
+
 
 #class: RNN model 
 class modelRNN(nn.Module):
@@ -28,31 +30,26 @@ class modelRNN(nn.Module):
         out,__ = self.rnn(x, h0) 
         return self.fc(out[:,-1,:])
 
-#class: dataset
-class ResumeDataset(Dataset):
-    def __init__(self, dataframe, word2vec):
-        self.data = dataframe
-        self.word2vec = word2vec
+#function: get data sets by implementing embed function on df
+def get_data_sets(df, word2vec, max_len, val_split=0.2):
+    # Split into training and validation sets
+    val_size = int(len(df) * val_split)
+    indices = list(range(len(df)))
+    random.shuffle(indices)
+    train_indices = indices[val_size:]
+    val_indices = indices[:val_size]
 
-    def __len__(self):
-        return len(self.data)
+    train_data = df.iloc[train_indices]
+    val_data = df.iloc[val_indices]
 
-    def __getitem__(self, index):
-        resume = self.data.iloc[index]['Embedded_Resume']
-        label = torch.tensor(self.data.iloc[index]['Job_Category'])  # Assuming 'Job_Category' is the label column
-        return torch.tensor(resume, dtype=torch.float32), label
+    # Convert cleaned resumes to word2vec embeddings
+    def process_data(data):
+        return torch.tensor([embed(x, word2vec, max_len) for x in data['Cleaned_Resume']])
 
-# function: Create DataLoader
-def get_data_loaders(batch_size=1):
-    dataset = ResumeDataset(df, word2vec)
-    train_size = int(0.8 * len(dataset))  # 80% for training
-    val_size = len(dataset) - train_size  # Remaining for validation
-    train_set, val_set = torch.utils.data.random_split(dataset, [train_size, val_size])
-    
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
-    
-    return train_loader, val_loader
+    train_set = torch.utils.data.TensorDataset(process_data(train_data), torch.tensor(train_data['Job_Category'].values))
+    val_set = torch.utils.data.TensorDataset(process_data(val_data), torch.tensor(val_data['Job_Category'].values))
+
+    return train_set, val_set
 
 
 #function: training the model
