@@ -17,6 +17,9 @@ data_dir = "../Resume.csv"
 df = pd.read_csv(data_dir)
 stop_words = set(stopwords.words('english'))
 
+# Factorize the 'Category' column to convert string labels into integer classes
+df['Category'], unique_categories = pd.factorize(df['Category'])
+
 # Function to clean the text
 def clean_text(text):
     text = str(text).lower() # convert everything to lowercase
@@ -52,11 +55,16 @@ def embed(words, word2vec, max_len = 100):
 df['Cleaned_Resume'] = df['Resume_str'].apply(clean_text)
 df['Embedded_Resume'] = df['Cleaned_Resume'].apply(lambda x: embed(x, word2vec))
 
+
+'''
 # Print the results
 original_resume = df.loc[5, 'Resume_str']
 cleaned_resume = df.loc[5, 'Cleaned_Resume']
 embedded_resume = df.loc[5, 'Embedded_Resume']
 category = df.loc[5, 'Category']
+
+category1 = df.loc[400, 'Category']
+original_resume1 = df.loc[400, 'Resume_str']
 
 print(f"Category: {category}\n")
 print("Original Resume:")
@@ -65,3 +73,9 @@ print("\nCleaned Resume:")
 print(cleaned_resume)
 print('\nEmbedded_Resume\n')
 print(embedded_resume)
+
+print(f"Category: {category1}\n")
+print("Original Resume1:")
+print(original_resume1)
+
+'''
