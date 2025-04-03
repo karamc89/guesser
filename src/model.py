@@ -7,6 +7,7 @@ Fully connected network also defined in the modelRNN class
 Training function defined as well
 '''
 import torch
+import numpy as np
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
 import random 
@@ -35,12 +36,12 @@ class modelRNN(nn.Module):
 
 
 #function: training the model
-def train(model, train_set, val_set, n_epochs, lr):
+def train(model, train_loader, val_loader, n_epochs, lr):
     criterion = nn.CrossEntropyLoss() # can change loss criteria, but CE is most used for classification tasks
     optimizer = torch.optim.Adam(model.parameters(), lr=lr) #can change optimizer and lr for tuning
 
     for epoch in range(n_epochs):
-        for resume, label in train_set: #training data will contain resume content paired with predefined job category label
+        for resume, label in train_loader: #training data will contain resume content paired with predefined job category label
             optimizer.zero_grad()
             prediction = model(resume)
             loss = criterion(prediction, label)
@@ -51,7 +52,7 @@ def train(model, train_set, val_set, n_epochs, lr):
         val_loss = 0
         correct = 0
         total = 0
-        for resume, label in val_set:
+        for resume, label in val_loader:
             prediction = model(resume)
             val_loss += criterion(prediction, label).item()
             _, predicted = torch.max(prediction, 1)
@@ -59,7 +60,7 @@ def train(model, train_set, val_set, n_epochs, lr):
             correct += (predicted == label).sum().item()
 
         avg_val_loss = val_loss / len(val_set)
-        accuracy = 100 * correct / total
+        accuracy = correct / total
         print("epoch #:", epoch + 1)
         print("Loss:", avg_val_loss)
         print("Accuracy:", accuracy)
@@ -71,17 +72,19 @@ def get_data_sets(df, word2vec, max_len, val_split=0.2):
     val_size = int(len(df) * val_split)
     indices = list(range(len(df)))
     random.shuffle(indices)
-    train_indices = indices[val_size:]
-    val_indices = indices[:val_size]
+    train_indices = indices[:val_size] 
+    val_indices = indices[val_size:] 
 
     train_data = df.iloc[train_indices]
     val_data = df.iloc[val_indices]
 
-    train_resumes = [embed(x, word2vec, max_len) for x in train_data['Cleaned_Resume']]
-    val_resumes = [embed(x, word2vec, max_len) for x in val_data['Cleaned_Resume']]
 
-    train_set = torch.utils.data.TensorDataset(torch.tensor(train_resumes, dtype=torch.float32), torch.tensor(train_data['Category'].values))
-    val_set = torch.utils.data.TensorDataset(torch.tensor(val_resumes, dtype=torch.float32), torch.tensor(val_data['Category'].values))
+    train_resumes = np.array([np.array(x, dtype=np.float32) for x in train_data['Embedded_Resume']], dtype=np.float32)
+    val_resumes = np.array([np.array(x, dtype=np.float32) for x in val_data['Embedded_Resume']], dtype=np.float32)
+
+    train_set = torch.utils.data.TensorDataset(torch.tensor(train_resumes, dtype=torch.float32), torch.tensor(train_data['Category'].values, dtype=torch.long))
+    val_set = torch.utils.data.TensorDataset(torch.tensor(val_resumes, dtype=torch.float32), torch.tensor(val_data['Category'].values, dtype=torch.long))
+
 
     return train_set, val_set
 
@@ -90,12 +93,15 @@ def get_data_sets(df, word2vec, max_len, val_split=0.2):
 
 input_size = 300
 hidden_size = 128
+batch_size = 32
 num_class = 24
 model_rnn = modelRNN(input_size, hidden_size, num_class)
 
 train_set, val_set = get_data_sets(df, word2vec, max_len = 100)
-train(model_rnn, train_set, val_set, 5, 1e-5)
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 
+train(model_rnn, train_loader, val_loader, 5, 1e-5)
 
 
 
