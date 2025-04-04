@@ -8,6 +8,7 @@ Training function defined as well
 '''
 import torch
 import numpy as np
+import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
 import random 
@@ -40,30 +41,75 @@ def train(model, train_loader, val_loader, n_epochs, lr):
     criterion = nn.CrossEntropyLoss() # can change loss criteria, but CE is most used for classification tasks
     optimizer = torch.optim.Adam(model.parameters(), lr=lr) #can change optimizer and lr for tuning
 
+    train_losses = []
+    train_accs = []
+    valid_losses = []
+    valid_accs = []
+
     for epoch in range(n_epochs):
+        model.train()
+        train_loss = 0.0
+        correct_train = 0
+        total_train = 0
         for resume, label in train_loader: #training data will contain resume content paired with predefined job category label
             optimizer.zero_grad()
             prediction = model(resume)
             loss = criterion(prediction, label)
             loss.backward()
             optimizer.step()
+            optimizer.zero_grad()
+            train_loss += loss.item()
+            predicted_labels = torch.argmax(prediction, dim=1)
+            correct_train += (predicted_labels == label).sum().item()
+            total_train += label.size(0)
 
         model.eval()  # Set the model to evaluation mode
-        val_loss = 0
-        correct = 0
-        total = 0
+        val_loss = 0.0
+        correct_val = 0
+        total_val = 0
+
         for resume, label in val_loader:
             prediction = model(resume)
-            val_loss += criterion(prediction, label).item()
-            _, predicted = torch.max(prediction, 1)
-            total += label.size(0)
-            correct += (predicted == label).sum().item()
+            loss = criterion(prediction, label)
+            loss.backward()
+            optimizer.step()
+            val_loss += loss.item()
+            predicted_labels = torch.argmax(prediction, dim=1)
+            correct_val += (predicted_labels == label).sum().item()
+            total_val += label.size(0)
 
-        avg_val_loss = val_loss / len(val_set)
-        accuracy = correct / total
-        print("epoch #:", epoch + 1)
-        print("Loss:", avg_val_loss)
-        print("Accuracy:", accuracy)
+
+        #get loss
+        avg_train_loss = train_loss / len(train_loader)
+        avg_valid_loss = val_loss / len(val_loader)
+        train_accuracy = correct_train / total_train
+        valid_accuracy = correct_val / total_val
+
+        train_losses.append(avg_train_loss)
+        valid_losses.append(avg_valid_loss)
+        train_accs.append(train_accuracy)
+        valid_accs.append(valid_accuracy)
+
+
+        print(f"Epoch {epoch + 1}:")
+        print(f"  Train Loss: {avg_train_loss:.4f} | Train Accuracy: {train_accuracy:.4f}")
+        print(f"  Val   Loss: {avg_valid_loss:.4f} | Val   Accuracy: {valid_accuracy:.4f}")
+
+    plt.plot(range(1, n_epochs+1), train_losses, label="Train Loss")
+    plt.plot(range(1, n_epochs+1), valid_losses, label="Validation Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.show()
+    
+    #plot accuracy
+    plt.title("Train vs Validation Accuracy")
+    plt.plot(range(1,n_epochs+1), train_accs, label="Train")
+    plt.plot(range(1,n_epochs+1), valid_accs, label="Validation")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.legend(loc='best')
+    plt.show()
            
 
 #function: get data sets by implementing embed function on df
@@ -72,8 +118,8 @@ def get_data_sets(df, word2vec, max_len, val_split):
     val_size = int(len(df) * val_split)
     indices = list(range(len(df)))
     random.shuffle(indices)
-    val_indices = indices[:val_size] 
-    train_indices = indices[val_size:] 
+    train_indices = indices[:val_size] 
+    val_indices = indices[val_size:] 
 
     train_data = df.iloc[train_indices]
     val_data = df.iloc[val_indices]
@@ -105,7 +151,7 @@ val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 train(model_rnn, train_loader, val_loader, 5, 1e-5)
 
 # testing/evaluation step
-eval_set, _ = get_data_sets(eval_data_set, word2vec, max_len=100, val_split=0)
+eval_set, _ = get_data_sets(eval_data_set, word2vec, max_len=100, val_split=1.0)
 eval_loader = DataLoader(eval_set, batch_size=batch_size, shuffle=False)
 
 model_rnn.eval()
@@ -125,13 +171,9 @@ with torch.no_grad():
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
-avg_eval_loss = eval_loss / len(eval_loader)
+avg_eval_loss = eval_loss / len(eval_set)
 accuracy = correct / total
 
 print("Final Evaluation on eval_data_set:")
 print(f"Loss: {avg_eval_loss:.4f}")
 print(f"Accuracy: {accuracy:.4f}")
-
-
-
-
