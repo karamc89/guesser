@@ -105,7 +105,7 @@ val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 train(model_rnn, train_loader, val_loader, 5, 1e-5)
 
 # testing/evaluation step
-eval_set, _ = eval_set, _ = get_data_sets(eval_data_set, word2vec, max_len=100, val_split=0)
+eval_set, _ = get_data_sets(eval_data_set, word2vec, max_len=100, val_split=0)
 eval_loader = DataLoader(eval_set, batch_size=batch_size, shuffle=False)
 
 model_rnn.eval()
