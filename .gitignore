@@ -4,6 +4,7 @@ __pycache__
 *.pyd
 *.pyw
 *.pyz
+.DS_Store
 
 GoogleNews-vectors-negative300.bin
 venv/
