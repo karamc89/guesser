@@ -97,7 +97,7 @@ batch_size = 32
 num_class = 24
 model_rnn = modelRNN(input_size, hidden_size, num_class)
 
-train_set, val_set = get_data_sets(df_trainval, word2vec, max_len = 100, val_split=0.2)
+train_set, val_set = get_data_sets(df_trainval, word2vec, max_len = 100, val_split=0.11)
 train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 
