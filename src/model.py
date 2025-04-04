@@ -141,6 +141,7 @@ input_size = 300
 hidden_size = 128
 batch_size = 32
 num_class = 24
+num_epochs = 30
 model_rnn = modelRNN(input_size, hidden_size, num_class)
 
 train_set, val_set = get_data_sets(df_trainval, word2vec, max_len = 100, val_split=0.11)
@@ -148,7 +149,7 @@ train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 
 
-train(model_rnn, train_loader, val_loader, 5, 1e-5)
+train(model_rnn, train_loader, val_loader, num_epochs, 1e-5)
 
 # testing/evaluation step
 eval_set, _ = get_data_sets(eval_data_set, word2vec, max_len=100, val_split=1.0)
