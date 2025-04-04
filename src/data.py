@@ -122,7 +122,7 @@ df['Embedded_Resume'] = df['Cleaned_Resume'].apply(lambda x: embed(x, word2vec))
 
 # Reserve 10% of the dataset to be untouched before testing
 # DO NOT MODIFY random_state variable
-df_trainval, eval_data_set = train_test_split(df, test_size = 0.1, random_state = 22, shuffle = True)
+df_trainval, eval_data_set = train_test_split(df, test_size = 0.1, random_state = 22, stratify= df['Category'], shuffle = True)
 
 '''
 # Print the results

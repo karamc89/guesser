@@ -170,14 +170,11 @@ def train(model, train_loader, val_loader, n_epochs, lr):
 #function: get data sets by implementing embed function on df
 def get_data_sets(df, word2vec, max_len, val_split):
     # Split into training and validation sets
-    val_size = int(len(df) * val_split)
-    indices = list(range(len(df)))
-    random.shuffle(indices)
-    val_indices = indices[:val_size]
-    train_indices = indices[val_size:]
-
-    train_data = df.iloc[train_indices]
-    val_data = df.iloc[val_indices]
+    train_data, val_data = train_test_split(
+        df,
+        test_size=val_split,                 
+        stratify=df["Category"],            # ensures similar category distribution
+        random_state = 42)                     # for reproducibility
 
 
     train_resumes = np.array([np.array(x, dtype=np.float32) for x in train_data['Embedded_Resume']], dtype=np.float32)
@@ -188,6 +185,17 @@ def get_data_sets(df, word2vec, max_len, val_split):
 
 
     return train_set, val_set
+
+def get_eval_data(df, word2vec, max_len):
+    eval_resumes = np.array(
+        [np.array(x, dtype=np.float32) for x in df['Embedded_Resume']],
+        dtype=np.float32
+    )
+    eval_set = torch.utils.data.TensorDataset(
+        torch.tensor(eval_resumes, dtype=torch.float32),
+        torch.tensor(df['Category'].values, dtype=torch.long)
+    )
+    return eval_set
 
 
 #implementation:
@@ -219,7 +227,7 @@ try:
     model_rnn = model_rnn.to(device)
     train(model_rnn, train_loader, val_loader, num_epochs, learning_rate)
     
-    eval_set, _ = get_data_sets(eval_data_set, word2vec, max_len=max_seq_length, val_split=1.0)
+    eval_set = get_eval_data(eval_data_set, word2vec, max_len=max_seq_length)
     eval_loader = DataLoader(eval_set, batch_size=batch_size, shuffle=False)
     
     model_rnn.eval()
