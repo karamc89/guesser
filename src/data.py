@@ -7,6 +7,7 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from gensim.models import KeyedVectors
+from sklearn.model_selection import train_test_split
 
 ssl._create_default_https_context = ssl._create_unverified_context
 word2vec = KeyedVectors.load_word2vec_format("../GoogleNews-vectors-negative300.bin", binary=True)
@@ -55,6 +56,10 @@ def embed(words, word2vec, max_len = 100):
 df['Cleaned_Resume'] = df['Resume_str'].apply(clean_text)
 df['Embedded_Resume'] = df['Cleaned_Resume'].apply(lambda x: embed(x, word2vec))
 
+
+# Reserve 10% of the dataset to be untouched before testing
+# DO NOT MODIFY random_state variable
+df_trainval, eval_data_set = train_test_split(df, test_size = 0.1, random_state = 22, shuffle = True)
 
 '''
 # Print the results

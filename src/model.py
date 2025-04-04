@@ -12,7 +12,7 @@ from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
 import random 
 import data
-from data import df
+from data import df_trainval, eval_data_set
 from data import word2vec
 from data import embed
 
@@ -67,13 +67,13 @@ def train(model, train_loader, val_loader, n_epochs, lr):
            
 
 #function: get data sets by implementing embed function on df
-def get_data_sets(df, word2vec, max_len, val_split=0.2):
+def get_data_sets(df, word2vec, max_len, val_split):
     # Split into training and validation sets
     val_size = int(len(df) * val_split)
     indices = list(range(len(df)))
     random.shuffle(indices)
-    train_indices = indices[:val_size] 
-    val_indices = indices[val_size:] 
+    val_indices = indices[:val_size] 
+    train_indices = indices[val_size:] 
 
     train_data = df.iloc[train_indices]
     val_data = df.iloc[val_indices]
@@ -97,12 +97,40 @@ batch_size = 32
 num_class = 24
 model_rnn = modelRNN(input_size, hidden_size, num_class)
 
-train_set, val_set = get_data_sets(df, word2vec, max_len = 100)
+train_set, val_set = get_data_sets(df_trainval, word2vec, max_len = 100, val_split=0.2)
 train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 
+
 train(model_rnn, train_loader, val_loader, 5, 1e-5)
 
+# testing/evaluation step
+eval_set, _ = eval_set, _ = get_data_sets(eval_data_set, word2vec, max_len=100, val_split=0)
+eval_loader = DataLoader(eval_set, batch_size=batch_size, shuffle=False)
+
+model_rnn.eval()
+criterion = nn.CrossEntropyLoss()
+
+eval_loss = 0.0
+correct = 0
+total = 0
+
+with torch.no_grad():
+    for resumes, labels in eval_loader:
+        predictions = model_rnn(resumes)
+        loss = criterion(predictions, labels).item()
+        eval_loss += loss
+
+        _, predicted = torch.max(predictions, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+avg_eval_loss = eval_loss / len(eval_loader)
+accuracy = correct / total
+
+print("Final Evaluation on eval_data_set:")
+print(f"Loss: {avg_eval_loss:.4f}")
+print(f"Accuracy: {accuracy:.4f}")
 
 
 
