@@ -68,6 +68,13 @@ def train(model, train_loader, val_loader, n_epochs, lr):
         correct_val = 0
         total_val = 0
 
+        with torch.no_grad():
+            for resume, label in val_loader:
+                prediction = model(resume)
+                loss = criterion(prediction, label)
+                val_loss += loss.item()
+                predicted_labels = torch.argmax(prediction, dim=1)
+                correct_val += (predicted_labels == label).sum().item()
         for resume, label in val_loader:
             prediction = model(resume)
             loss = criterion(prediction, label)
