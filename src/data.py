@@ -104,15 +104,6 @@ def check_vocab_coverage(df):
     words_in_vocab = sum(1 for word in unique_words if word in word2vec.key_to_index)
     
     coverage = words_in_vocab / len(unique_words) if unique_words else 0
-    
-    
-    # DELETE I THINK
-    # Find most common OOV words
-    oov_words = [word for word in unique_words if word not in word2vec.key_to_index]
-    oov_counter = Counter([word for word in all_words if word in oov_words])
-    print("Most common out-of-vocabulary words:")
-    for word, count in oov_counter.most_common(10):
-        print(f"  {word}: {count}")
 
 #Clean and embedding
 df['Cleaned_Resume'] = df['Resume_str'].apply(clean_text)
